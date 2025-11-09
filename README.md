@@ -77,7 +77,7 @@ Since the backend application uses query with `LIKE` operator:
 SELECT * FROM users WHERE first_name LIKE '%Kate%' AND last_name LIKE '%Li%' ORDER BY id;
 ```
 
-We need an index that can work with composite data such as GIN (Generalized Inverted Index). Similarity of words can be checked using `pg_trgm` extension that provides `gin_trgm_ops` operator for GIN index:
+We need an index that can work with composite data such as GIN (Generalized Inverted Index). Since we always use both `first_name` and `last_name` for search queries we will create composite index. Similarity of words can be checked using `pg_trgm` extension that provides `gin_trgm_ops` operator for GIN index:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
