@@ -22,16 +22,91 @@ _No files were provided by the course, everything is done as the assignment._
 
 ## Steps
 
-0. Install Node.js data generator script dependencies
+### 0. Install Node.js data generator script dependencies
 
 ```bash
 pnpm install
 ```
 
-1. First we need to generate `database-init.sql` file with random users data. To do that, run:
+### 1. Generate `database-init.sql` file with random users data. 
+
+To do that, run:
 
 ```bash
 node data-generator.js
 ```
 
-2.
+### 2. Running docker compose spec:
+
+```bash
+docker compose up -d
+
+# check everything is running
+docker compose ps
+```
+
+### 3.`EXPLAIN` query:
+
+To check query performance related data enter the database container and run `EXPLAIN` with `SELECT` query
+
+```bash
+docker compose exec -it db psql -U postgres -d assignment-4
+```
+
+```sql
+EXPLAIN (ANALYZE) SELECT * FROM users WHERE first_name LIKE '%Kate%' AND last_name LIKE '%Li%' ORDER BY id;
+```
+
+Result:
+
+![psql-no-index](/screenshots/psql-no-index.jpg)
+
+The result shows that:
+
+- PostgreSQL returned 14 rows
+- It took ~45-49ms to execute the query
+- `Parallel Seq Scan` means that PostgreSQL is **scanning the entire table sequentially**. It's not using any indexes right now.
+
+### 4. Creating and using an index that actually improves the query performance:
+
+Since the backend application uses query with `LIKE` operator:
+
+```sql
+SELECT * FROM users WHERE first_name LIKE '%Kate%' AND last_name LIKE '%Li%' ORDER BY id;
+```
+
+We need an index that can work with composite data such as GIN (Generalized Inverted Index). Similarity of words can be checked using `pg_trgm` extension that provides `gin_trgm_ops` operator for GIN index:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX users_name_trgm_idx ON users USING gin (
+  first_name gin_trgm_ops,
+  last_name gin_trgm_ops
+);
+```
+
+Result with the same query:
+
+![psql-gin-index-worse](/screenshots/psql-gin-index-worse.jpg)
+
+The result shows that:
+
+- PostgreSQL still returned 14 rows
+- It took ~165ms to execute the query (**which is worse than the previous result**)
+- `Bitmap Index Scan` means that PostgreSQL filtered the rows using the newly created index
+
+As to why the result is worse: too low selectivity for the current query. Since we form trigrams (`gin_trgm_ops`), the more trigrams can be formed the better filtering power.
+
+According to the documentation, **no extractable trigrams for `LIKE` lead to much worse performance**. Just adding one letter changes the situation dramatically:
+
+![psql-gin-index-better](/screenshots/psql-gin-index-better.jpg)
+
+- PostgreSQL returned 8 rows (the query is now more precise)
+- It took ~0.7ms to execute the query
+- `Bitmap Index Scan`
+
+
+
+
+
