@@ -18,6 +18,7 @@ _No files were provided by the course, everything is done as the assignment._
 - `database-init.template.sql` - PostgreSQL image init script template that `data-generator.js` script will read and replace `$VALUES` placeholder with generated users data
 - `database-init.sql` - Initially is not there and will be created by `data-generator.js` script
 - `data-generator.js` - Node.js script that generates 1 000 000 random users and writes it to `database-init.sql` file replacing `$VALUES` placeholder
+- `server` - Node.js Express application that has a single endpoint `/search` that accepts `firstName` and `lastName` query parameters and returns users that match those parameters. It connects to PostgreSQL database.
 
 ## Steps
 
