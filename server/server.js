@@ -2,7 +2,11 @@ import express from 'express';
 import pg from 'pg';
 
 const client = new pg.Client({
-  connectionString: 'postgres://postgres:12345@localhost:5432/postgres',
+  host: process.env.POSTGRES_HOST || 'localhost',
+  port: 5432,
+  user: process.env.POSTGRES_USER || 'postgres',
+  password: process.env.POSTGRES_PASSWORD || 'postgres',
+  database: process.env.POSTGRES_DB || 'postgres',
 });
 
 client.connect();
@@ -16,7 +20,7 @@ app.get('/search', async (req, res) => {
     return res.status(400).json({ error: 'Missing firstName or lastName' });
   }
 
-  const queryText = `SELECT * FROM users WHERE first_name LIKE $1 AND last_name LIKE $2`;
+  const queryText = `SELECT * FROM users WHERE first_name LIKE $1 AND last_name LIKE $2 ORDER BY id`;
 
   const query = await client.query(queryText, [`%${firstName}%`, `%${lastName}%`]);
 
