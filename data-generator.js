@@ -3,11 +3,11 @@ import fs from 'fs/promises';
 
 function createRandomUser() {
   return {
-    first_name: faker.person.firstName(),
-    last_name: faker.person.lastName(),
+    first_name: faker.person.firstName().replaceAll('\'', '\'\''),
+    last_name: faker.person.lastName().replaceAll('\'', '\'\''),
     birthdate: faker.date.birthdate(),
-    biography: faker.lorem.paragraph(),
-    city: faker.location.city(),
+    biography: faker.lorem.paragraph().replaceAll('\'', '\'\''),
+    city: faker.location.city().replaceAll('\'', '\'\''),
   };
 }
 
